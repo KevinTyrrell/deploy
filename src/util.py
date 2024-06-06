@@ -20,6 +20,12 @@ from typing import TypeVar
 
 __T = TypeVar("__T")
 
-def require_non_none()
 
-
+def require_non_none(obj: __T) -> __T:
+    """
+    :param obj: Object which should not be None
+    :return: Identity
+    """
+    if obj is None:
+        raise ValueError("Expected non-None argument was None.")
+    return obj

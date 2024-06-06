@@ -19,16 +19,14 @@
 import argparse
 import subprocess
 
-def process_exists(name: str)
+from util import require_non_none
 
-def ensure_prerequisites():
-    status = subprocess.run(["which", "gh"], capture_output=True, text=True)
-    if not status or not status.returncode or status.returncode != 0:
+
 
 
 
 def main():
-    pass
+    ensure_prerequisites()
 
 
 if __name__ == '__main__':
