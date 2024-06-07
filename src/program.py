@@ -18,7 +18,8 @@
 
 import subprocess
 
-from typing import Optional
+from typing import Optional, Tuple, Any
+from threading import Thread
 
 from util import require_non_none
 
@@ -62,6 +63,48 @@ class Program:
         if not self.runnable():
             raise RuntimeError(f"{self.__program_name} was not\
              runnable or DNE. Ensure the program is configured.")
+
+    def run(self, *args: Optional[str]) -> int | Any:
+        """
+        Runs the program with the specified arguments
+
+        :param args: Arguments to pass into the program
+        :return: stdout, stderr capture
+        """
+        self.check()
+        params = [self.__command] + list(args or [])
+        process = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        def stream_reader(pipe, output_type):
+            while True:
+                line = pipe.readline()
+                if not line:
+                    break
+                if output_type == 'stdout':
+                    print(line.strip())
+                else:
+                    print(f"ERROR: {line.strip()}")
+
+        # Create threads for reading stdout and stderr
+        stdout_thread = Thread(target=stream_reader, args=(process.stdout, 'stdout'))
+        stderr_thread = Thread(target=stream_reader, args=(process.stderr, 'stderr'))
+
+        # Start the threads
+        stdout_thread.start()
+        stderr_thread.start()
+
+        # Wait for the process to complete
+        process.wait()
+
+        # Wait for the threads to complete
+        stdout_thread.join()
+        stderr_thread.join()
+
+        return process.returncode
+
+    def __call__(self, *args, **kwargs):
+        self.check()
+        params = [self.__command] + list(args or [])
 
     def __str__(self) -> str:
         return self.__program_name
