@@ -18,7 +18,7 @@
 
 import subprocess
 
-from typing import Optional, Tuple, Any
+from typing import Optional, Any
 from threading import Thread
 
 from util import require_non_none
