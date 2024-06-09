@@ -18,17 +18,17 @@
 
 import subprocess
 
-from typing import Optional, Any
+from typing import Optional, Any, List
 from threading import Thread
 
-from util import require_non_none
+from src.util.util import require_non_none
 
 
 class Program:
-    def __init__(self, command: str, program_name=None):
+    def __init__(self, command: str, program_name: Optional[str] = None):
         """
-        :param command: Name of the command, as if executed on the terminal
-        :param program_name: Formal name of the program
+        :param command: Name of the command, as if executed on the terminal.
+        :param program_name: Formal name of the program.
         """
         if not require_non_none(command):
             raise ValueError("Program executable cannot be empty.")
@@ -37,42 +37,44 @@ class Program:
         self.__command: str = command
         self.__program_name: str = program_name
 
-    def exists(self) -> bool:
+    def exists(self, required: Optional[bool] = False) -> bool:
         """
-        :return: True if the program exists on the PATH
+        :param required: [Optional] Requires the program to exist, if True.
+        :return: True if the program exists in the PATH.
+        :raises: RuntimeError if `required` flag set and program does not exist.
         """
         from shutil import which
-        return which(self.__command) is not None
+        prog_exists = which(self.__command) is not None
+        if required and not prog_exists:
+            raise RuntimeError(f"{self.__program_name} was not found within the"
+                               f" PATH. Ensure '{self.__command}'is installed.")
+        return prog_exists
 
-    def runnable(self, *args: Optional[str]) -> bool:
+    def runnable(self, required: Optional[bool] = False, params: Optional[List[str]] = None) -> bool:
         """
-        :param args: [Optional] List of commands to pass into the program ('--version' by default)
-        :return: True, if the program can be executed
+        :param required: [Optional] Requires the program to be runnable, if True.
+        :param params: [Optional] Parameters to pass into the program.
+        :return: True if the program is not runnable.
+        :raises: RuntimeError if `required` flag set and program is not runnable.
         """
-        params = [self.__command] + list(args or ["--version"])
-        status = subprocess.run(params, capture_output=True, text=True)
-        return status and hasattr(status, "returncode") and status.returncode == 0
+        cmd = [self.__command] + (params or list())
+        status = subprocess.run(cmd, capture_output=True, text=True)
+        prog_runnable = status and status.returncode == 0
+        if required and not prog_runnable:
+            raise RuntimeError(f"{self.__program_name} was not runnable or"
+                               f" DNE. Ensure the program is configured.")
+        return prog_runnable
 
-    def check(self) -> None:
+    def execute(self, params: Optional[List[str]] = None) -> int | Any:
         """
-        Ensures the program is installed and is runnable
-        """
-        if not self.exists():
-            raise RuntimeError(f"{self.__program_name} was not found\
-             within the PATH. Ensure '{self.__command}'is installed.")
-        if not self.runnable():
-            raise RuntimeError(f"{self.__program_name} was not\
-             runnable or DNE. Ensure the program is configured.")
+        Runs the program with the specified arguments.
+        TODO: Callback for text output from the program.
 
-    def run(self, *args: Optional[str]) -> int | Any:
+        :param params: [Optional] Arguments to pass into the program.
+        :return: Process return code.
         """
-        Runs the program with the specified arguments
-
-        :param args: Arguments to pass into the program
-        :return: stdout, stderr capture
-        """
-        self.check()
-        params = [self.__command] + list(args or [])
+        self.exists(True) and self.runnable(True)
+        params = [self.__command]
         process = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         def stream_reader(pipe, output_type):
@@ -103,7 +105,6 @@ class Program:
         return process.returncode
 
     def __call__(self, *args, **kwargs):
-        self.check()
         params = [self.__command] + list(args or [])
 
     def __str__(self) -> str:
