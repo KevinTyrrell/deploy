@@ -57,7 +57,11 @@ class MyTestCase(unittest.TestCase):
             p.exists(True)
 
     def test_program_output(self):
-        self.zip.execute(["-h"])
+        result = []
+        self.zip.execute(["-h"], stdout_cb=None, stderr_cb=lambda x: result.append(x))
+        self.assertListEqual(result, [])
+        self.zip.execute(["-h"], stdout_cb=lambda x: result.append(x))
+        self.assertGreater(len(result), 0)
 
 
 if __name__ == '__main__':

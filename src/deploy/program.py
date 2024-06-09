@@ -18,7 +18,8 @@
 
 import subprocess
 
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Callable
+from io import TextIOWrapper
 from threading import Thread
 
 from src.util.util import require_non_none
@@ -65,47 +66,39 @@ class Program:
                                f" DNE. Ensure the program is configured.")
         return prog_runnable
 
-    def execute(self, params: Optional[List[str]] = None) -> int | Any:
+    def execute(self, params: Optional[List[str]] = None,
+                stdout_cb: Optional[Callable[[str], None]] = print,
+                stderr_cb: Optional[Callable[[str], None]] = print) -> int | Any:
         """
         Runs the program with the specified arguments.
-        TODO: Callback for text output from the program.
 
         :param params: [Optional] Arguments to pass into the program.
-        :return: Process return code.
+        :param stdout_cb: [Optional] Callback for stdout stream.
+        :param stderr_cb: [Optional] Callback for stderr stream.
+        :return: Return code of the process.
         """
-        self.exists(True) and self.runnable(True)
-        params = [self.__command]
-        process = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        params = [self.__command] + (params or [])
+        stdout_cb = stdout_cb if stdout_cb else lambda *__: None
+        stderr_cb = stderr_cb if stderr_cb else lambda *__: None
+        with subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as process:
+            def line_reader(pipe: TextIOWrapper, cb: Callable[[str], None]):
+                while True:
+                    line = pipe.readline()
+                    if not line:
+                        break
+                    cb(line.strip())
 
-        def stream_reader(pipe, output_type):
-            while True:
-                line = pipe.readline()
-                if not line:
-                    break
-                if output_type == 'stdout':
-                    print(line.strip())
-                else:
-                    print(f"ERROR: {line.strip()}")
+            # Separate output of stdout and stderr
+            stdout_thread = Thread(target=line_reader, args=(process.stdout, stdout_cb))
+            stderr_thread = Thread(target=line_reader, args=(process.stderr, stderr_cb))
 
-        # Create threads for reading stdout and stderr
-        stdout_thread = Thread(target=stream_reader, args=(process.stdout, 'stdout'))
-        stderr_thread = Thread(target=stream_reader, args=(process.stderr, 'stderr'))
+            stdout_thread.start()
+            stderr_thread.start()
+            process.wait()
+            stdout_thread.join()
+            stderr_thread.join()
 
-        # Start the threads
-        stdout_thread.start()
-        stderr_thread.start()
-
-        # Wait for the process to complete
-        process.wait()
-
-        # Wait for the threads to complete
-        stdout_thread.join()
-        stderr_thread.join()
-
-        return process.returncode
-
-    def __call__(self, *args, **kwargs):
-        params = [self.__command] + list(args or [])
+            return process.returncode
 
     def __str__(self) -> str:
         return self.__program_name
