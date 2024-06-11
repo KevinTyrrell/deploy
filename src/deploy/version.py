@@ -16,7 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
 from enum import Enum
 from functools import total_ordering
 
@@ -41,6 +40,11 @@ class Bump(Enum):
             return None
 
 
+def _validate_bump_increase(increase: int):
+    if increase < 1:
+        raise ValueError(f"Version bump increase must be positive: {increase}")
+
+
 @total_ordering  # Auto-implement other comparison functions
 class Version:
     def __new__(cls, *args, **kwargs):
@@ -55,8 +59,9 @@ class Version:
         :param bump: Section of the version to bump up.
         :param increase: Amount to bump the section up by.
         :return: Updated version, in string form.
+        :raises: ValueError if increase is non-positive.
         """
-        Version._verify_increase(increase)
+        _validate_bump_increase(increase)
         match require_non_none(bump):
             case Bump.MAJOR:
                 self._major += increase
@@ -81,11 +86,6 @@ class Version:
     def build(self) -> str | None:
         return None
 
-    @staticmethod
-    def _verify_increase(increase: int):
-        if require_non_none(increase) < 1:
-            raise ValueError("Bump increase must be positive.")
-
     def __eq__(self, other) -> bool:
         if not isinstance(other, Version):
             return False
@@ -102,4 +102,34 @@ class Version:
         return f"v{self._major}.{self._minor}"
 
 
+@total_ordering
+class VersionPatch(Version):
+    def __init__(self, major: int = 1, minor: int = 0, patch: int = 0):
+        super().__init__(major, minor)
+        self._patch = patch
 
+    def bump(self, bump: Bump, increase: int = 1) -> str:
+        if require_non_none(bump) == Bump.PATCH:
+            _validate_bump_increase(increase)
+            self._patch += increase
+            return str(self)
+        return super().bump(bump, increase)
+
+    @property
+    def patch(self) -> int:
+        return self._patch
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, VersionPatch) or self._patch != other._patch:
+            return False
+        return super().__eq__(other)
+
+    def __gt__(self, other):
+        if not isinstance(other, VersionPatch):
+            return False
+        if super().__gt__(other):
+            return True
+        return self._patch > other._patch
+
+    def __str__(self) -> str:
+        return f"{super().__str__()}.{self._patch}"
