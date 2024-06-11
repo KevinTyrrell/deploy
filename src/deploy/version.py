@@ -18,6 +18,7 @@
 
 from typing import Optional
 from enum import Enum
+from functools import total_ordering
 
 
 from util.util import require_non_none
@@ -40,6 +41,7 @@ class Bump(Enum):
             return None
 
 
+@total_ordering  # Auto-implement other comparison functions
 class Version:
     def __new__(cls, *args, **kwargs):
         pass
@@ -84,6 +86,20 @@ class Version:
         if require_non_none(increase) < 1:
             raise ValueError("Bump increase must be positive.")
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return self._major == other._major and self._minor == other._minor
+
+    def __gt__(self, other):
+        if not isinstance(other, Version):
+            return False
+        if self._major > other._major:
+            return True
+        return self._minor > other._minor
+
     def __str__(self) -> str:
         return f"v{self._major}.{self._minor}"
+
+
 
