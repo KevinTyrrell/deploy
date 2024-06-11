@@ -18,6 +18,7 @@
 
 from enum import Enum
 from functools import total_ordering
+from re import match
 
 
 from util.util import require_non_none
@@ -47,8 +48,29 @@ def _validate_bump_increase(increase: int):
 
 @total_ordering  # Auto-implement other comparison functions
 class Version:
-    def __new__(cls, *args, **kwargs):
-        pass
+    def __new__(cls, version: str):
+        """
+        Creates a version instance from a semantic versioned string
+
+        The following are examples of semantic versioning:
+        v1.12.1     2.0     33.5.09-release         1.0-beta
+
+        :param version: Semantic versioned string
+        """
+        matcher = match(r".*?(\d+)\.(\d+).*", require_non_none(version))
+        if matcher:  # String is, at-minimum, semantic versioned
+            major, minor = map(int, matcher.groups())
+            matcher = match(r".*?\d+\.\d+\.(\d+).*", version)
+            if matcher:  # String includes a 'patch'
+                instance = _VersionPatch(major, minor, int(matcher.group(1)))
+            else:
+                instance = Version.__init__(major, minor)
+            matcher = match(r"\d+\.\d+(\.\d+)?-(.+)", version)
+            if matcher:  # String includes a 'build' tag, use decorator
+                instance = _VersionBuildDC(instance, matcher.group(2))
+            return instance
+        else:
+            raise ValueError(f"Version string is not of semantic versioning format: {version}")
 
     def __init__(self, major: int = 1, minor: int = 0):
         self._major: int = major
