@@ -102,8 +102,8 @@ class Version:
         return f"v{self._major}.{self._minor}"
 
 
-@total_ordering
-class VersionPatch(Version):
+@total_ordering  # Auto-implement other comparison functions
+class _VersionPatch(Version):
     def __init__(self, major: int = 1, minor: int = 0, patch: int = 0):
         super().__init__(major, minor)
         self._patch = patch
@@ -120,12 +120,12 @@ class VersionPatch(Version):
         return self._patch
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, VersionPatch) or self._patch != other._patch:
+        if not isinstance(other, _VersionPatch) or self._patch != other._patch:
             return False
         return super().__eq__(other)
 
     def __gt__(self, other):
-        if not isinstance(other, VersionPatch):
+        if not isinstance(other, _VersionPatch):
             return False
         if super().__gt__(other):
             return True
@@ -133,3 +133,41 @@ class VersionPatch(Version):
 
     def __str__(self) -> str:
         return f"{super().__str__()}.{self._patch}"
+
+
+@total_ordering  # Auto-implement other comparison functions
+class _VersionBuildDC(Version):
+    def __init__(self, decorated: Version, build: str):
+        super().__init__()  # Essentially ignored -- this object is a facade
+        self.__decorated = require_non_none(decorated)
+        self._build = require_non_none(build)
+
+    def bump(self, bump: Bump, increase: int = 1) -> str:
+        return self.__decorated.bump(bump, increase)
+
+    @property
+    def major(self) -> int:
+        return self.__decorated.major
+
+    @property
+    def minor(self) -> int:
+        return self.__decorated.minor
+
+    @property
+    def patch(self) -> int:
+        return self.__decorated.patch
+
+    @property
+    def build(self) -> str | None:
+        return self._build
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, _VersionBuildDC) or self._build != other._build:
+            return False
+        return self.__decorated == other.__decorated
+
+    def __gt__(self, other):
+        return self.__decorated > other
+
+    def __str__(self) -> str:
+        return f"{str(self.__decorated)}-{self._build}"
