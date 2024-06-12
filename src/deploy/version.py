@@ -135,7 +135,9 @@ class _VersionPatch(Version):
             _validate_bump_increase(increase)
             self._patch += increase
             return str(self)
-        return super().bump(bump, increase)
+        else:
+            self._patch = 0
+            return super().bump(bump, increase)
 
     @property
     def patch(self) -> int:
