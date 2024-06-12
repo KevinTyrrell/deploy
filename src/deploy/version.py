@@ -64,7 +64,7 @@ class Version:
                 instance = _VersionPatch(major, minor, int(matcher.group(1)))
             else:
                 instance = _Version(major, minor)
-            matcher = match(r"\d+\.\d+(\.\d+)?-(.+)", version)
+            matcher = match(r".*\d+\.\d+(\.\d+)?-(.+)", version)
             if matcher:  # String includes a 'build' tag, use decorator
                 instance = _VersionBuildDC(instance, matcher.group(2))
             return instance
@@ -169,7 +169,8 @@ class _VersionBuildDC(_Version):
         self._build = require_non_none(build)
 
     def bump(self, bump: Bump, increase: int = 1) -> str:
-        return self.__decorated.bump(bump, increase)
+        self.__decorated.bump(bump, increase)
+        return str(self)
 
     @property
     def major(self) -> int:

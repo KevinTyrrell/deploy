@@ -82,6 +82,12 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(v.bump(Bump.MINOR), "v35.1.0")
         self.assertEqual(v.bump(Bump.MAJOR, 5), "v40.0.0")
 
+    def test_version_3(self):
+        v = Version("v01.12.0001-vanilla")
+        self.assertEqual(str(v), "v1.12.1-vanilla")
+        self.assertEqual(v.build, "vanilla")
+        self.assertEqual(v.bump(Bump.PATCH, 2), "v1.12.3-vanilla")
+
 
 if __name__ == '__main__':
     unittest.main()
