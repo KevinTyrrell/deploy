@@ -46,7 +46,6 @@ def _validate_bump_increase(increase: int):
         raise ValueError(f"Version bump increase must be positive: {increase}")
 
 
-@total_ordering  # Auto-implement other comparison functions
 class Version:
     def __new__(cls, version: str):
         """
@@ -64,7 +63,7 @@ class Version:
             if matcher:  # String includes a 'patch'
                 instance = _VersionPatch(major, minor, int(matcher.group(1)))
             else:
-                instance = Version.__init__(major, minor)
+                instance = _Version(major, minor)
             matcher = match(r"\d+\.\d+(\.\d+)?-(.+)", version)
             if matcher:  # String includes a 'build' tag, use decorator
                 instance = _VersionBuildDC(instance, matcher.group(2))
@@ -72,6 +71,9 @@ class Version:
         else:
             raise ValueError(f"Version string is not of semantic versioning format: {version}")
 
+
+@total_ordering  # Auto-implement other comparison functions
+class _Version:
     def __init__(self, major: int = 1, minor: int = 0):
         self._major: int = major
         self._minor: int = minor
@@ -109,12 +111,12 @@ class Version:
         return None
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, Version):
+        if not isinstance(other, _Version):
             return False
         return self._major == other._major and self._minor == other._minor
 
     def __gt__(self, other):
-        if not isinstance(other, Version):
+        if not isinstance(other, _Version):
             return False
         if self._major > other._major:
             return True
@@ -125,7 +127,7 @@ class Version:
 
 
 @total_ordering  # Auto-implement other comparison functions
-class _VersionPatch(Version):
+class _VersionPatch(_Version):
     def __init__(self, major: int = 1, minor: int = 0, patch: int = 0):
         super().__init__(major, minor)
         self._patch = patch
@@ -160,8 +162,8 @@ class _VersionPatch(Version):
 
 
 @total_ordering  # Auto-implement other comparison functions
-class _VersionBuildDC(Version):
-    def __init__(self, decorated: Version, build: str):
+class _VersionBuildDC(_Version):
+    def __init__(self, decorated: _Version, build: str):
         super().__init__()  # Essentially ignored -- this object is a facade
         self.__decorated = require_non_none(decorated)
         self._build = require_non_none(build)

@@ -19,6 +19,7 @@
 import unittest
 
 from src.deploy.program import Program
+from src.deploy.version import Version, Bump
 
 
 class MyTestCase(unittest.TestCase):
@@ -62,6 +63,16 @@ class MyTestCase(unittest.TestCase):
         self.assertListEqual(result, [])
         self.zip.execute(["-h"], stdout_cb=lambda x: result.append(x))
         self.assertGreater(len(result), 0)
+
+    def test_version_1(self):
+        v = Version("v2.9")
+        self.assertEqual(str(v), "v2.9")
+        v.bump(Bump.MINOR)
+        self.assertEqual(v.minor, 10)
+        self.assertIsNone(v.build)
+        self.assertEqual(v.patch, 0)
+        self.assertEqual(v.major, 2)
+        self.assertEqual(v.bump(Bump.MAJOR), "v3.0")
 
 
 if __name__ == '__main__':
