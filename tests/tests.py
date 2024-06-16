@@ -88,6 +88,35 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(v.build, "vanilla")
         self.assertEqual(v.bump(Bump.PATCH, 2), "v1.12.3-vanilla")
 
+    def test_version_4(self):
+        v1 = Version("9.5")
+        v2 = Version("10.0")
+        self.assertTrue(v2 > v1)
+        v1.bump(Bump.MAJOR)
+        self.assertTrue(v1 == v2)
+
+    def test_version_5(self):
+        v1 = Version("1.2.3-beta")
+        v2 = Version("v1.2.3-alpha")
+        self.assertTrue(v1 == v2)
+        self.assertFalse(v1 > v2)
+        self.assertFalse(v1 < v2)
+        v1.bump(Bump.PATCH)
+        self.assertTrue(v1 > v2)
+
+    def test_version_6(self):
+        v1 = Version("5.0")
+        v2 = Version("4.9.1")
+        self.assertTrue(v1 > v2)
+        self.assertGreater(v1, v2)
+        self.assertLess(v2, v1)
+        v2.bump(Bump.MAJOR)
+        self.assertEqual(v1, v2)
+        self.assertEqual(v2, v1)
+        v2.bump(Bump.PATCH)
+        self.assertGreater(v2, v1)
+        self.assertLess(v1, v2)
+
 
 if __name__ == '__main__':
     unittest.main()

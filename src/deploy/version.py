@@ -66,13 +66,13 @@ class Version:
                 instance = _Version(major, minor)
             matcher = match(r".*\d+\.\d+(\.\d+)?-(.+)", version)
             if matcher:  # String includes a 'build' tag, use decorator
-                instance = _VersionBuildDC(instance, matcher.group(2))
+                return _VersionBuildDC(instance, matcher.group(2))
             return instance
         else:
             raise ValueError(f"Version string is not of semantic versioning format: {version}")
 
 
-@total_ordering  # Auto-implement other comparison functions
+#@total_ordering  # Auto-implement other comparison functions
 class _Version:
     def __init__(self, major: int = 1, minor: int = 0):
         self._major: int = major
@@ -111,22 +111,24 @@ class _Version:
         return None
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, _Version):
-            return False
-        return self._major == other._major and self._minor == other._minor
+        if isinstance(other, _Version):
+            return self.major == other.major and self.minor == other.minor
+        return NotImplemented
 
     def __gt__(self, other):
-        if not isinstance(other, _Version):
-            return False
-        if self._major > other._major:
-            return True
-        return self._minor > other._minor
+        if isinstance(other, _Version):
+            if self.major > other.major:
+                return True
+            if self.major < other.major:
+                return False
+            return self.minor > other.minor
+        return NotImplemented
 
     def __str__(self) -> str:
         return f"v{self._major}.{self._minor}"
 
 
-@total_ordering  # Auto-implement other comparison functions
+#@total_ordering  # Auto-implement other comparison functions
 class _VersionPatch(_Version):
     def __init__(self, major: int = 1, minor: int = 0, patch: int = 0):
         super().__init__(major, minor)
@@ -146,22 +148,27 @@ class _VersionPatch(_Version):
         return self._patch
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, _VersionPatch) or self._patch != other._patch:
+
+
+
+        if not isinstance(other, _Version):
             return False
-        return super().__eq__(other)
+        if self.major != other.major:
+            return False
+        if self.minor != other.minor:
+            return False
+        return self.patch == other.patch
 
     def __gt__(self, other):
-        if not isinstance(other, _VersionPatch):
-            return False
-        if super().__gt__(other):
-            return True
-        return self._patch > other._patch
+        if isinstance(other, _Version):
+            return self.major > other.major or self.minor > other.minor or self.patch > other.patch
+        return NotImplemented
 
     def __str__(self) -> str:
         return f"{super().__str__()}.{self._patch}"
 
 
-@total_ordering  # Auto-implement other comparison functions
+#@total_ordering  # Auto-implement other comparison functions
 class _VersionBuildDC(_Version):
     def __init__(self, decorated: _Version, build: str):
         super().__init__()  # Essentially ignored -- this object is a facade
@@ -188,10 +195,8 @@ class _VersionBuildDC(_Version):
     def build(self) -> str | None:
         return self._build
 
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, _VersionBuildDC) or self._build != other._build:
-            return False
-        return self.__decorated == other.__decorated
+    def __eq__(self, other):
+        return self.__decorated == other
 
     def __gt__(self, other):
         return self.__decorated > other
