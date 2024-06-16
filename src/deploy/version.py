@@ -148,16 +148,15 @@ class _VersionPatch(_Version):
         return self._patch
 
     def __eq__(self, other) -> bool:
-
-
-
-        if not isinstance(other, _Version):
-            return False
-        if self.major != other.major:
-            return False
-        if self.minor != other.minor:
-            return False
-        return self.patch == other.patch
+        match _Version.__eq__(self, other):
+            case True:
+                if isinstance(other, _VersionPatch):
+                    return self.patch == other.patch
+                else:
+                    return self.patch == 0
+            case False:
+                return False
+        return NotImplemented
 
     def __gt__(self, other):
         if isinstance(other, _Version):
@@ -196,6 +195,8 @@ class _VersionBuildDC(_Version):
         return self._build
 
     def __eq__(self, other):
+        if isinstance(other, _VersionBuildDC):
+            return self.__decorated == other.__decorated
         return self.__decorated == other
 
     def __gt__(self, other):
