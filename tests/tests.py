@@ -117,6 +117,31 @@ class MyTestCase(unittest.TestCase):
         self.assertGreater(v2, v1)
         self.assertLess(v1, v2)
 
+    def test_version_7(self):
+        v1 = Version("23.09.35")
+        v2 = Version("23.09.33")
+        self.assertGreater(v1, v2)
+        self.assertLess(v2, v1)
+        v2.bump(Bump.PATCH, 2)
+        self.assertEqual(v1, v2)
+        v1.bump(Bump.PATCH)
+        self.assertGreater(v1, v2)
+        v2.bump(Bump.MINOR)
+        self.assertGreater(v2, v1)
+        v1.bump(Bump.MAJOR)
+        self.assertGreater(v1, v2)
+
+    def test_version_8(self):
+        v1 = Version("2.0.1-batch")
+        v2 = Version("2.0")
+        self.assertGreater(v1, v2)
+        self.assertLess(v2, v1)
+        v2.bump(Bump.MINOR)
+        self.assertGreater(v2, v1)
+        v3 = Version(v1.bump(Bump.MINOR))
+        self.assertEqual(v1, v3)
+        #self.assertLessEqual(v3, v2)
+
 
 if __name__ == '__main__':
     unittest.main()
