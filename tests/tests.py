@@ -140,7 +140,7 @@ class MyTestCase(unittest.TestCase):
         self.assertGreater(v2, v1)
         v3 = Version(v1.bump(Bump.MINOR))
         self.assertEqual(v1, v3)
-        #self.assertLessEqual(v3, v2)
+        self.assertLessEqual(v3, v2)
 
 
 if __name__ == '__main__':

@@ -72,7 +72,7 @@ class Version:
             raise ValueError(f"Version string is not of semantic versioning format: {version}")
 
 
-#@total_ordering  # Auto-implement other comparison functions
+@total_ordering  # Auto-implement other comparison functions
 class _Version:
     def __init__(self, major: int = 1, minor: int = 0):
         self._major: int = major
@@ -128,7 +128,7 @@ class _Version:
         return f"v{self._major}.{self._minor}"
 
 
-#@total_ordering  # Auto-implement other comparison functions
+@total_ordering  # Auto-implement other comparison functions
 class _VersionPatch(_Version):
     def __init__(self, major: int = 1, minor: int = 0, patch: int = 0):
         super().__init__(major, minor)
@@ -159,15 +159,20 @@ class _VersionPatch(_Version):
         return NotImplemented
 
     def __gt__(self, other):
-        if isinstance(other, _Version):
-            return self.major > other.major or self.minor > other.minor or self.patch > other.patch
+        match _Version.__gt__(self, other):
+            case True:
+                return True
+            case False:
+                if self.major == other.major and self.minor == other.minor:
+                    return self.patch > other.patch
+                return False
         return NotImplemented
 
     def __str__(self) -> str:
         return f"{super().__str__()}.{self._patch}"
 
 
-#@total_ordering  # Auto-implement other comparison functions
+@total_ordering  # Auto-implement other comparison functions
 class _VersionBuildDC(_Version):
     def __init__(self, decorated: _Version, build: str):
         super().__init__()  # Essentially ignored -- this object is a facade
@@ -200,6 +205,8 @@ class _VersionBuildDC(_Version):
         return self.__decorated == other
 
     def __gt__(self, other):
+        if isinstance(other, _VersionBuildDC):
+            return self.__decorated > other.__decorated
         return self.__decorated > other
 
     def __str__(self) -> str:
