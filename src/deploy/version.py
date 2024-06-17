@@ -16,9 +16,13 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import  annotations
 from enum import Enum
 from functools import total_ordering
 from re import match
+from pathlib import Path
+
+import pickle
 
 
 from util.util import require_non_none
@@ -70,6 +74,62 @@ class Version:
             return instance
         else:
             raise ValueError(f"Version string is not of semantic versioning format: {version}")
+
+    @staticmethod
+    def from_path(path: str) -> Version:
+        pass
+
+
+class VersionSerializer:
+    __FILE_EXT = ".ser"
+    __FILE_NAME = "Version"
+
+    def __init__(self, path: str):
+        """
+        :param path: Directory path to which the Version is de/serialized to/from.
+        """
+        self.__dir: Path = Path(require_non_none(path))
+        self.__file: Path = self.__dir.joinpath(self.__FILE_NAME, self.__FILE_EXT)
+
+    def loadable(self) -> bool:
+        """
+        :return: True if the Version can be de-serialized from the path.
+        """
+        self.__check_valid_dir()
+        try:
+            self.__check_valid_file()
+            return True
+        except FileNotFoundError | RuntimeError:
+            return False
+
+    def save(self, version: Version) -> None:
+        """
+        :param version: Version object to be saved to-be serialized.
+        """
+        self.__check_valid_dir()
+        with open(str(self.__file.absolute()), "wb") as file:
+            pickle.dump(require_non_none(version), file)
+
+    def load(self) -> Version:
+        """
+        :return: Attempts to de-serialize the Version object.
+        """
+        self.__check_valid_dir()
+        self.__check_valid_file()
+        with open(str(self.__file.absolute()), "rb") as file:
+            return pickle.load(file)
+
+    def __check_valid_dir(self) -> None:
+        if not self.__dir.exists():
+            raise FileNotFoundError(f"Version directory does not exist: {self.__dir}")
+        if not self.__dir.is_dir():
+            raise RuntimeError(f"Version directory path does not point to a directory: {self.__dir}")
+
+    def __check_valid_file(self) -> None:
+        if not self.__file.exists():
+            raise FileNotFoundError(f"Version file does not exist: {self.__file}")
+        if not self.__file.is_file():
+            raise RuntimeError(f"Version file path does not point to a file: {self.__file}")
 
 
 @total_ordering  # Auto-implement other comparison functions
