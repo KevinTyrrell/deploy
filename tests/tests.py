@@ -144,13 +144,21 @@ class MyTestCase(unittest.TestCase):
 
     def test_file_1(self):
         from pathlib import Path
-        p = Path(__file__).parent.parent
-        ver = Version("2.9.1-beta")
-        ser = VersionSerializer(str(p))
-        ser.save(ver)
-        p = Path("Version.ser")
-        self.assertTrue(p.exists())
-        p.unlink(True)
+        dir_path = Path(__file__).parent.parent
+        self.assertTrue(dir_path.exists())
+        file_path = dir_path.joinpath("Version.ser")
+        ser = VersionSerializer(str(dir_path))
+        examples = ["2.9.1-beta", "505.09.1", "5.0-alpha", "1.0"]
+        for ver_str in examples:
+            ver = Version(ver_str)
+            ser.save(ver)
+            self.assertTrue(ser.loadable())
+            loaded = ser.load()
+            self.assertEqual(loaded, ver)
+            loaded.bump(Bump.MAJOR)
+            self.assertNotEqual(loaded, ver)
+            loaded.bump(Bump.PATCH)
+            file_path.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

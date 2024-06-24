@@ -113,7 +113,7 @@ class VersionSerializer:
         with open(str(self.__file.absolute()), "wb") as file:
             pickle.dump(require_non_none(version), file)
 
-    def load(self) -> Version:
+    def load(self) -> _Version:
         """
         :return: Attempts to de-serialize the Version object.
         """
