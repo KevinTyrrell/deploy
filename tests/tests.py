@@ -19,7 +19,7 @@
 import unittest
 
 from src.deploy.program import Program
-from src.deploy.version import Version, Bump
+from src.deploy.version import Version, Bump, VersionSerializer
 
 
 class MyTestCase(unittest.TestCase):
@@ -141,6 +141,16 @@ class MyTestCase(unittest.TestCase):
         v3 = Version(v1.bump(Bump.MINOR))
         self.assertEqual(v1, v3)
         self.assertLessEqual(v3, v2)
+
+    def test_file_1(self):
+        from pathlib import Path
+        p = Path(__file__).parent.parent
+        ver = Version("2.9.1-beta")
+        ser = VersionSerializer(str(p))
+        ser.save(ver)
+        p = Path("Version.ser")
+        self.assertTrue(p.exists())
+        p.unlink(True)
 
 
 if __name__ == '__main__':

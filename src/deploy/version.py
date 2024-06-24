@@ -81,15 +81,18 @@ class Version:
 
 
 class VersionSerializer:
-    __FILE_EXT = ".ser"
+    __FILE_EXT = "ser"
     __FILE_NAME = "Version"
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, file_name: str = __FILE_NAME, file_ext: str = __FILE_EXT):
         """
         :param path: Directory path to which the Version is de/serialized to/from.
+        :param file_name: Name of the file, omitting extension.
+        :param file_ext: Name of the file extension, omitting a dot.
         """
-        self.__dir: Path = Path(require_non_none(path))
-        self.__file: Path = self.__dir.joinpath(self.__FILE_NAME, self.__FILE_EXT)
+        file = f"{require_non_none(file_name)}.{require_non_none(file_ext)}"
+        self.__dir = Path(require_non_none(path))
+        self.__file = self.__dir.joinpath(file)
 
     def loadable(self) -> bool:
         """
