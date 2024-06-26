@@ -18,10 +18,42 @@
 
 import unittest
 
+from src.deploy.version import Version, Bump, VersionSerializer
 
-class MyTestCase(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, True)  # add assertion here
+
+class TestFileIO(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_file_1(self):
+        from pathlib import Path
+        dir_path = Path(__file__).parent.parent
+        self.assertTrue(dir_path.exists())
+        file_path = dir_path.joinpath("Version.ser")
+        ser = VersionSerializer(str(dir_path))
+        examples = ["2.9.1-beta", "505.09.1", "5.0-alpha", "1.0"]
+        for ver_str in examples:
+            ver = Version(ver_str)
+            ser.save(ver)
+            self.assertTrue(ser.loadable())
+            loaded = ser.load()
+            self.assertEqual(loaded, ver)
+            loaded.bump(Bump.MAJOR)
+            self.assertNotEqual(loaded, ver)
+            loaded.bump(Bump.PATCH)
+            file_path.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

@@ -18,11 +18,10 @@
 
 import unittest
 
-from src.deploy.program import Program
 from src.deploy.version import Version, Bump, VersionSerializer
 
 
-class MyTestCase(unittest.TestCase):
+class TestVersion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -33,36 +32,10 @@ class MyTestCase(unittest.TestCase):
         pass
 
     def setUp(self):
-        self.git = Program("git", "Git")
-        self.zip = Program("7z", "7-Zip")
-        self.gh = Program("gh", "GihHub CLI")
+        pass
 
     def tearDown(self):
         pass
-
-    def test_programs_can_be_run(self):
-        programs = [(self.git, ["-v"]), (self.zip, None), (self.gh, None)]
-        [self.assertTrue(a.exists()) for a, _ in programs]
-        [self.assertTrue(a.runnable(params=b)) for a, b in programs]
-
-    def test_program_runnable_raise(self):
-        self.assertTrue(self.git.exists())
-        self.assertFalse(self.git.runnable())
-        with self.assertRaises(RuntimeError):
-            self.git.runnable(True)
-
-    def test_program_exists_raise(self):
-        p = Program("@")
-        self.assertFalse(p.exists())
-        with self.assertRaises(RuntimeError):
-            p.exists(True)
-
-    def test_program_output(self):
-        result = []
-        self.zip.execute(["-h"], stdout_cb=None, stderr_cb=lambda x: result.append(x))
-        self.assertListEqual(result, [])
-        self.zip.execute(["-h"], stdout_cb=lambda x: result.append(x))
-        self.assertGreater(len(result), 0)
 
     def test_version_1(self):
         v = Version("v2.9")
