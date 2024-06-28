@@ -16,9 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from re import match
+import re
 
-from line_injector import LineInjector
+from src.injector.line_injector import LineInjector
 from src.deploy.version import Version
 from src.util.util import require_non_none
 
@@ -44,7 +44,7 @@ class VersionInjector(LineInjector):
 
     def _substitute(self, line: str) -> str:
         for pattern in self.__VERSION_STRING_PATTERNS:
-            matcher = match(pattern, line)
+            matcher = re.match(pattern, line, re.DOTALL)
             if matcher:
                 return f"{matcher.group(1)}{str(self.__version)}{matcher.group(2)}"
         raise RuntimeError(f"No valid version pattern found in line under Version marker: {line}")

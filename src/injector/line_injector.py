@@ -75,4 +75,6 @@ class LineInjector(ABC):
             lines = file.readlines()
             if not self.__parse_file(lines):
                 raise RuntimeError(f"File \"{file_path.absolute()}\" does not contain expected marker: {self.marker()}")
+            file.seek(0)
+            file.truncate()
             file.writelines(lines)
