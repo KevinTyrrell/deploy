@@ -45,8 +45,7 @@ class DateInjector(LineInjector):
     def _substitute(self, line: str) -> str:
         parser = _DateParser(line)  # Prepare to find where the date is in the specified string.
         parser.inject_date(self.__date)
-        k = parser.rebuild()
-        return k
+        return parser.rebuild()
 
     def marker(self) -> str:
         return self.__marker

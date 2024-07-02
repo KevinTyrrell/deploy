@@ -121,8 +121,7 @@ class TestFileIO(unittest.TestCase):
             "\n",
             "\n",
             "# Mark: /-- DO NOT MODIFY /--/ [deploy Date Marker] --/\n",
-            # "# Compiled on 2023-09-24 -- Python 3.10.9\n",
-            "Built on 2023-09-24 See link on GitHub\n",
+            "# Compiled on 2023-09-24 -- Python\n",
             "\n",
             "def main():\n",
             "\tpass\n",
@@ -131,7 +130,7 @@ class TestFileIO(unittest.TestCase):
         dt = datetime(2024, 3, 15)
         injector = DateInjector(dt)
         injector.inject(str(self.sample1_path))
-        content[4] = "# Compiled on 2024-03-15 -- Python 3.10.9\n"
+        content[4] = "# Compiled on 2024-03-15 -- Python\n"
         with self.sample1_path.open("r") as file:
             lines = file.readlines()
             self.assertListEqual(content, lines)
