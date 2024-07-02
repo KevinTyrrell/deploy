@@ -54,6 +54,7 @@ class LineInjector(ABC):
         while i < num_lines:
             if marker in lines[i - 1]:  # Check the line above for the marker.
                 # Ask the subclass how to inject content into the line.
+                # TODO: Consider try-catch for more explicit error messages.
                 lines[i] = require_non_none(self._substitute(lines[i]))
                 i, changed = i + 1, True  # Skip an extra line.
             i += 1

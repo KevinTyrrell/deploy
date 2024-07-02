@@ -17,11 +17,13 @@
 """
 
 import unittest
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
 from src.deploy.version import Version, Bump, VersionSerializer
 from src.injector.version_injector import VersionInjector
+from src.injector.date_injector import DateInjector
 
 
 class TestFileIO(unittest.TestCase):
@@ -98,6 +100,40 @@ class TestFileIO(unittest.TestCase):
             self.assertEqual(lines[5], "\tVERSION_STR = 'v22.0.0-batch'.replace('$','~')\n")
             del lines[5]
             del content[5]
+            self.assertListEqual(content, lines)
+
+    def test_time_str_package(self):
+        from dateutil.parser import parse as parse_date
+        test_str = "I will be available on 2024-09-13 in the evening"
+        t: datetime | tuple = parse_date(test_str, fuzzy_with_tokens=True)
+        self.assertIsNotNone(t)
+        self.assertIsInstance(t, tuple)
+        self.assertGreater(len(t), 1)
+        tokens = t[1]
+        self.assertIsNotNone(tokens)
+        self.assertEqual(len(tokens), 2)
+        self.assertEqual(tokens[0], "I will be available on ")
+        self.assertEqual(tokens[1], " in the evening")
+
+    def test_date_inject_1(self):
+        content = self.write_file(self.sample1_path, [
+            "from math import exp\n",
+            "\n",
+            "\n",
+            "# Mark: /-- DO NOT MODIFY /--/ [deploy Date Marker] --/\n",
+            # "# Compiled on 2023-09-24 -- Python 3.10.9\n",
+            "Built on 2023-09-24 See link on GitHub\n",
+            "\n",
+            "def main():\n",
+            "\tpass\n",
+            "\n"
+        ])
+        dt = datetime(2024, 3, 15)
+        injector = DateInjector(dt)
+        injector.inject(str(self.sample1_path))
+        content[4] = "# Compiled on 2024-03-15 -- Python 3.10.9\n"
+        with self.sample1_path.open("r") as file:
+            lines = file.readlines()
             self.assertListEqual(content, lines)
 
 
